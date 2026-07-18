@@ -5,9 +5,13 @@ import { User } from '@/common/entities/user.entity';
 import { PerformanceMetric } from '@/common/entities/performance-metric.entity';
 import { EvaluationsService } from './evaluations.service';
 import { EvaluationsController } from './evaluations.controller';
+import { PracticalTasksModule } from '@/practical-tasks/practical-tasks.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Evaluation, User, PerformanceMetric])],
+  imports: [
+    TypeOrmModule.forFeature([Evaluation, User, PerformanceMetric]),
+    PracticalTasksModule,
+  ],
   providers: [EvaluationsService],
   controllers: [EvaluationsController],
   exports: [EvaluationsService],

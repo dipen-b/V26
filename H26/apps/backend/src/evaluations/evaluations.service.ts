@@ -7,6 +7,7 @@ import { PerformanceMetric } from '@/common/entities/performance-metric.entity';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
+import { PracticalTasksService } from '@/practical-tasks/practical-tasks.service';
 
 @Injectable()
 export class EvaluationsService {
@@ -15,6 +16,7 @@ export class EvaluationsService {
     @InjectRepository(User) private usersRepository: Repository<User>,
     @InjectRepository(PerformanceMetric)
     private metricsRepository: Repository<PerformanceMetric>,
+    private practicalTasksService: PracticalTasksService,
   ) {}
 
   async getMyEvaluations(employeeId: string) {
@@ -87,6 +89,14 @@ export class EvaluationsService {
     const savedEvaluation = await this.evaluationsRepository.save(evaluation);
 
     await this.recordPerformanceMetric(employeeId, evaluationDto.scores, readinessScore);
+
+    // Auto-generate a dynamic practical task targeting the weakest dimensions.
+    await this.practicalTasksService.generateFromEvaluation({
+      employee,
+      supervisor,
+      evaluationId: savedEvaluation.id,
+      scores: evaluationDto.scores,
+    });
 
     return savedEvaluation;
   }

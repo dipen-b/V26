@@ -13,6 +13,8 @@ import {
   UsersIcon,
   ClipboardDocumentCheckIcon,
   ArrowRightOnRectangleIcon,
+  CodeBracketIcon,
+  CpuChipIcon,
 } from '@heroicons/react/24/outline';
 
 interface SidebarProps {
@@ -27,6 +29,7 @@ export function Sidebar({ role }: SidebarProps) {
   const employeeLinks = [
     { name: 'Dashboard', href: '/employee/dashboard', icon: HomeIcon },
     { name: 'My Tasks', href: '/employee/tasks', icon: ClipboardDocumentListIcon },
+    { name: 'Practical Tasks', href: '/employee/practical-tasks', icon: CodeBracketIcon },
     { name: 'My Projects', href: '/employee/projects', icon: FolderIcon },
     { name: 'My Evaluations', href: '/employee/evaluations', icon: ClipboardDocumentCheckIcon },
     { name: 'My Growth', href: '/employee/growth', icon: ArrowTrendingUpIcon },
@@ -38,6 +41,7 @@ export function Sidebar({ role }: SidebarProps) {
     { name: 'Team', href: '/supervisor/team', icon: UsersIcon },
     { name: 'Analytics', href: '/supervisor/analytics', icon: ChartBarIcon },
     { name: 'Evaluations', href: '/supervisor/evaluations', icon: ClipboardDocumentCheckIcon },
+    { name: 'AI Reviews', href: '/supervisor/reviews', icon: CpuChipIcon },
     { name: 'Profile', href: '/supervisor/profile', icon: UserIcon },
   ];
 
