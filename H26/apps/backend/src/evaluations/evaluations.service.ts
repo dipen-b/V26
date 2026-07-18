@@ -80,6 +80,7 @@ export class EvaluationsService {
       evidence: evaluationDto.evidence,
       improvementAreas: evaluationDto.improvementAreas || [],
       recommendations: evaluationDto.recommendations || [],
+      supervisorNotes: evaluationDto.supervisorNotes,
       readinessScore,
     });
 

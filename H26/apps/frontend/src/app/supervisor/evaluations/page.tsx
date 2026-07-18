@@ -41,6 +41,7 @@ export default function EvaluationsPage() {
   const [improvements, setImprovements] = useState('');
   const [recommendations, setRecommendations] = useState('');
   const [supervisorNotes, setSupervisorNotes] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -92,11 +93,25 @@ export default function EvaluationsPage() {
     setEvidence(prev => ({ ...prev, [field]: value }));
   };
 
+  const extractErrorMessage = (error: any): string => {
+    const data = error.response?.data;
+    const msg = data?.message;
+    if (Array.isArray(msg)) {
+      // ValidationPipe returns [{ field, message }, ...] or [string, ...]
+      return msg
+        .map((m: any) => (typeof m === 'string' ? m : m.message || JSON.stringify(m)))
+        .join(', ');
+    }
+    if (typeof msg === 'string') return msg;
+    return error.message || 'Something went wrong';
+  };
+
   const handleSubmitEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEmployee) return;
 
     setSubmitting(true);
+    setMessage(null);
     try {
       await apiClient.post(`/evaluations/employee/${selectedEmployee.id}`, {
         scores: formData,
@@ -133,9 +148,9 @@ export default function EvaluationsPage() {
       setRecommendations('');
       setSupervisorNotes('');
 
-      alert('Evaluation submitted successfully!');
+      setMessage({ type: 'success', text: 'Evaluation submitted successfully!' });
     } catch (error: any) {
-      alert('Failed to submit evaluation: ' + (error.response?.data?.message || error.message));
+      setMessage({ type: 'error', text: `Failed to submit evaluation: ${extractErrorMessage(error)}` });
     } finally {
       setSubmitting(false);
     }
@@ -153,6 +168,18 @@ export default function EvaluationsPage() {
         <h1 className="text-3xl font-bold text-white">Evaluations</h1>
         <p className="text-slate-400">Create and manage employee evaluations</p>
       </div>
+
+      {message && (
+        <div
+          className={`rounded-xl px-4 py-3 text-sm border ${
+            message.type === 'success'
+              ? 'bg-green-500/10 border-green-500/30 text-green-400'
+              : 'bg-red-500/10 border-red-500/30 text-red-400'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-6">
         {/* Employees List */}

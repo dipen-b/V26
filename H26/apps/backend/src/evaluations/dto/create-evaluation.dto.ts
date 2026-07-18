@@ -32,4 +32,8 @@ export class CreateEvaluationDto {
   @IsArray()
   @IsOptional()
   recommendations?: string[];
+
+  @IsString()
+  @IsOptional()
+  supervisorNotes?: string;
 }
