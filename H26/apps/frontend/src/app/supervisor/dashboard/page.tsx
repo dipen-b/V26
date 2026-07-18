@@ -2,14 +2,41 @@
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api';
-import { useAuthStore } from '@/stores/authStore';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
+import {
+  UsersIcon, CheckBadgeIcon, AcademicCapIcon, ExclamationTriangleIcon, HeartIcon,
+} from '@heroicons/react/24/outline';
+
+function StatCard({ label, value, sub, accent, icon: Icon }: any) {
+  return (
+    <div className="sp-card sp-card-hover sp-stat sp-animate-in" style={{ ['--accent' as any]: accent }}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{label}</p>
+          <div className="mt-2 text-3xl font-bold" style={{ color: accent }}>{value}</div>
+          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${accent}1f`, color: accent }}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  Ready: 'bg-green-500/15 text-green-400',
+  Progressing: 'bg-blue-500/15 text-blue-400',
+  Developing: 'bg-amber-500/15 text-amber-400',
+  'At Risk': 'bg-red-500/15 text-red-400',
+};
 
 export default function SupervisorDashboard() {
-  const { user } = useAuthStore();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [teamPerformance, setTeamPerformance] = useState([]);
-  const [readinessTrends, setReadinessTrends] = useState([]);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [teamPerformance, setTeamPerformance] = useState<any[]>([]);
+  const [readinessTrends, setReadinessTrends] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +47,6 @@ export default function SupervisorDashboard() {
           apiClient.get('/analytics/team-performance'),
           apiClient.get('/analytics/readiness-trends'),
         ]);
-
         setDashboardData(dashRes.data);
         setTeamPerformance(teamRes.data);
         setReadinessTrends(trendsRes.data);
@@ -30,139 +56,130 @@ export default function SupervisorDashboard() {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, []);
 
   if (loading || !dashboardData) {
     return (
-      <div className="p-8">
-        <div className="text-center text-slate-400">Loading dashboard...</div>
+      <div className="p-8 space-y-6">
+        <div className="sp-skeleton h-10 w-72" />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="sp-skeleton h-28" />)}
+        </div>
+        <div className="sp-skeleton h-72" />
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-8">
-      {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-white">Team Dashboard</h1>
-        <p className="text-slate-400">Overview of your team's performance and readiness</p>
+    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="sp-animate-in">
+        <h1 className="text-3xl font-bold tracking-tight text-white">Team Dashboard</h1>
+        <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
+          Overview of your team's performance and readiness.
+        </p>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <p className="text-sm text-slate-400 mb-2">Total Employees</p>
-          <div className="text-3xl font-bold text-white">{dashboardData.totalEmployees}</div>
-        </div>
-
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <p className="text-sm text-slate-400 mb-2">Ready for Project</p>
-          <div className="text-3xl font-bold text-green-400">{dashboardData.readyForProject}</div>
-          <p className="text-xs text-slate-500 mt-2">Score ≥ 85</p>
-        </div>
-
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <p className="text-sm text-slate-400 mb-2">Needs Mentoring</p>
-          <div className="text-3xl font-bold text-yellow-400">{dashboardData.needsMentoring}</div>
-          <p className="text-xs text-slate-500 mt-2">Score {'<'} 50</p>
-        </div>
-
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <p className="text-sm text-slate-400 mb-2">At Risk</p>
-          <div className="text-3xl font-bold text-red-400">{dashboardData.atRisk}</div>
-          <p className="text-xs text-slate-500 mt-2">Score {'<'} 60</p>
-        </div>
-
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <p className="text-sm text-slate-400 mb-2">Team Health Score</p>
-          <div className="text-3xl font-bold text-blue-400">{dashboardData.teamHealthScore}</div>
-          <p className="text-xs text-slate-500 mt-2">Overall team health</p>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <StatCard label="Total Employees" value={dashboardData.totalEmployees} sub="On your team" accent="#6366f1" icon={UsersIcon} />
+        <StatCard label="Ready for Project" value={dashboardData.readyForProject} sub="Score ≥ 85" accent="#22c55e" icon={CheckBadgeIcon} />
+        <StatCard label="Needs Mentoring" value={dashboardData.needsMentoring} sub="Score < 50" accent="#f59e0b" icon={AcademicCapIcon} />
+        <StatCard label="At Risk" value={dashboardData.atRisk} sub="Score < 60" accent="#ef4444" icon={ExclamationTriangleIcon} />
+        <StatCard label="Team Health" value={dashboardData.teamHealthScore} sub="Overall health" accent="#3b82f6" icon={HeartIcon} />
       </div>
 
       {/* Team Performance Table */}
-      <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Team Performance Overview</h2>
+      <div className="sp-card sp-animate-in">
+        <h2 className="sp-heading mb-4">Team Performance Overview</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-slate-300 font-semibold">Employee</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-semibold">Readiness</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-semibold">Performance</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
+              <tr className="text-left" style={{ color: 'var(--text-muted)' }}>
+                <th className="pb-3 font-medium">Employee</th>
+                <th className="pb-3 font-medium">Readiness</th>
+                <th className="pb-3 font-medium">Performance</th>
+                <th className="pb-3 font-medium text-right">Status</th>
               </tr>
             </thead>
             <tbody>
               {teamPerformance.map((member: any) => (
-                <tr key={member.id} className="border-b border-slate-700 hover:bg-slate-700/50">
-                  <td className="py-3 px-4">
-                    <p className="font-medium text-white">{member.name}</p>
-                    <p className="text-xs text-slate-400">{member.role}</p>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-slate-600 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-blue-500 rounded-full"
-                          style={{ width: `${Math.min(100, member.readinessScore)}%` }}
-                        />
+                <tr
+                  key={member.id}
+                  className="border-t transition-colors"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <td className="py-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white shrink-0"
+                        style={{ background: 'linear-gradient(135deg,#3b82f6,#6366f1)' }}
+                      >
+                        {member.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                       </div>
-                      <span className="text-sm font-medium text-blue-400">
-                        {member.readinessScore.toFixed(1)}
+                      <div>
+                        <p className="font-medium text-white">{member.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{member.role || 'Team Member'}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-1)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, member.readinessScore)}%`, background: 'linear-gradient(90deg,#3b82f6,#6366f1)' }} />
+                      </div>
+                      <span className="text-sm font-semibold" style={{ color: 'var(--accent-blue)' }}>
+                        {member.readinessScore?.toFixed(1)}
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-slate-600 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500 rounded-full"
-                          style={{ width: `${Math.min(100, member.performanceScore)}%` }}
-                        />
+                      <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-1)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, member.performanceScore)}%`, background: 'linear-gradient(90deg,#22c55e,#16a34a)' }} />
                       </div>
-                      <span className="text-sm font-medium text-green-400">
-                        {member.performanceScore.toFixed(1)}
+                      <span className="text-sm font-semibold text-green-400">
+                        {member.performanceScore?.toFixed(1)}
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-3 py-1 rounded text-xs font-semibold ${
-                      member.status === 'Ready'
-                        ? 'bg-green-900/30 text-green-400'
-                        : member.status === 'At Risk'
-                        ? 'bg-red-900/30 text-red-400'
-                        : 'bg-yellow-900/30 text-yellow-400'
-                    }`}>
+                  <td className="py-4 text-right">
+                    <span className={`sp-pill ${STATUS_STYLES[member.status] || STATUS_STYLES['At Risk']}`}>
                       {member.status}
                     </span>
                   </td>
                 </tr>
               ))}
+              {teamPerformance.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>
+                    No team members yet
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
       {/* Readiness Trends */}
-      {readinessTrends.length > 0 && (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Readiness Trends (Last 10 Evaluations)</h2>
+      {readinessTrends.length > 0 && readinessTrends[0]?.data?.length > 0 && (
+        <div className="sp-card sp-animate-in">
+          <h2 className="sp-heading mb-4">Readiness Trends</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={readinessTrends[0]?.data || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #475569',
-                  borderRadius: '8px',
-                }}
-              />
-              <Line type="monotone" dataKey="score" stroke="#3b82f6" dot={false} />
+            <LineChart data={readinessTrends[0]?.data || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#6366f1" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#263248" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} domain={[0, 100]} />
+              <Tooltip contentStyle={{ backgroundColor: '#1a2332', border: '1px solid #33415a', borderRadius: 12, color: '#f1f5f9' }} />
+              <Line type="monotone" dataKey="score" stroke="url(#lineGrad)" strokeWidth={3} dot={{ r: 4, fill: '#6366f1' }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

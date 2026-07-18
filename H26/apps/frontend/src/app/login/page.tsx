@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,89 +21,124 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     try {
       await login(email, password);
       router.push('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     }
   };
 
+  const fillDemo = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('password');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-      <div className="w-full max-w-md px-6 py-8">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-md sp-animate-in">
+        {/* Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">SkillProof AI</h1>
-          <p className="text-slate-400">Employee & Supervisor Performance Platform</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white font-semibold rounded-lg transition mt-6"
+          <div
+            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-white text-2xl font-bold"
+            style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-strong))', boxShadow: '0 10px 30px -8px rgba(79,70,229,0.6)' }}
           >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-slate-400 text-sm">
-            Don't have an account?{' '}
-            <button
-              onClick={() => router.push('/register')}
-              className="text-blue-400 hover:text-blue-300 font-semibold"
-            >
-              Register here
-            </button>
+            S
+          </div>
+          <h1 className="text-3xl font-bold text-white">SkillProof AI</h1>
+          <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
+            Employee &amp; Supervisor Performance Platform
           </p>
         </div>
 
-        <div className="mt-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-          <p className="text-slate-400 text-xs mb-3 font-semibold">Demo Credentials:</p>
-          <div className="space-y-2 text-xs">
-            <p className="text-slate-500">
-              <span className="text-slate-400">Employee:</span> employee@example.com / password
-            </p>
-            <p className="text-slate-500">
-              <span className="text-slate-400">Supervisor:</span> supervisor@example.com / password
+        {/* Card */}
+        <div className="sp-card">
+          <h2 className="sp-heading mb-1">Welcome back</h2>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+            Sign in to continue to your dashboard
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="flex items-start gap-2 rounded-xl p-3 text-sm bg-red-500/10 border border-red-500/30 text-red-400">
+                <ExclamationCircleIcon className="h-5 w-5 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="sp-input"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="sp-input"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <button type="submit" disabled={isLoading} className="sp-btn sp-btn-primary w-full mt-2">
+              {isLoading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Don't have an account?{' '}
+              <button
+                onClick={() => router.push('/register')}
+                className="font-semibold"
+                style={{ color: 'var(--brand)' }}
+              >
+                Register here
+              </button>
             </p>
           </div>
+        </div>
+
+        {/* Demo credentials */}
+        <div className="mt-4 sp-card">
+          <p className="text-xs font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>
+            DEMO CREDENTIALS
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => fillDemo('employee@example.com')}
+              className="rounded-xl p-3 text-left transition-colors"
+              style={{ background: 'var(--surface-3)' }}
+            >
+              <p className="text-xs font-semibold text-white">Employee</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>employee@example.com</p>
+            </button>
+            <button
+              onClick={() => fillDemo('supervisor@example.com')}
+              className="rounded-xl p-3 text-left transition-colors"
+              style={{ background: 'var(--surface-3)' }}
+            >
+              <p className="text-xs font-semibold text-white">Supervisor</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>supervisor@example.com</p>
+            </button>
+          </div>
+          <p className="text-xs mt-3 text-center" style={{ color: 'var(--text-muted)' }}>
+            Password for both: <span className="font-mono">password</span> · Click a card to autofill
+          </p>
         </div>
       </div>
     </div>
