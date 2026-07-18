@@ -5,25 +5,31 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
+const dashboardFor = (role?: string) =>
+  role === 'supervisor' ? '/supervisor/dashboard' : '/employee/dashboard';
+
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, isAuthenticated } = useAuthStore();
+  const { login, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
+    // If already authenticated (token in storage), skip the login screen
+    const { isAuthenticated, user } = useAuthStore.getState();
+    if (isAuthenticated && user) {
+      router.replace(dashboardFor(user.role));
     }
-  }, [isAuthenticated, router]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
       await login(email, password);
-      router.push('/');
+      const { user } = useAuthStore.getState();
+      router.replace(dashboardFor(user?.role));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     }
