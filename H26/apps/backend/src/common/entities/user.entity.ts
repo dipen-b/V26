@@ -32,7 +32,7 @@ export class User {
   @Column({ nullable: true })
   managerId?: string;
 
-  @Column({ default: false })
+  @Column({ default: true })
   isActive: boolean;
 
   @CreateDateColumn()
