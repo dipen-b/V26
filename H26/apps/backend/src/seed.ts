@@ -3,19 +3,21 @@ import * as bcrypt from 'bcryptjs';
 import { User } from './common/entities/user.entity';
 import { UserRole } from './common/enums/user-role.enum';
 import { Task } from './common/entities/task.entity';
+import { Project } from './common/entities/project.entity';
+import { Submission } from './common/entities/submission.entity';
+import { Evaluation } from './common/entities/evaluation.entity';
 import { PerformanceMetric } from './common/entities/performance-metric.entity';
 
 const AppDataSource = new DataSource({
   type: 'sqlite',
   database: './skillproof_ai.db',
-  entities: [User, Task, PerformanceMetric],
+  entities: [User, Task, Project, Submission, Evaluation, PerformanceMetric],
   synchronize: true,
 });
 
 async function seedDatabase() {
   await AppDataSource.initialize();
   const userRepo = AppDataSource.getRepository(User);
-  const taskRepo = AppDataSource.getRepository(Task);
   const performanceRepo = AppDataSource.getRepository(PerformanceMetric);
 
   // Check if data exists
@@ -48,7 +50,6 @@ async function seedDatabase() {
     role: UserRole.EMPLOYEE,
     department: 'Engineering',
     position: 'Senior Developer',
-    managerId: supervisor.id,
     isActive: true,
   });
 
@@ -60,7 +61,6 @@ async function seedDatabase() {
     role: UserRole.EMPLOYEE,
     department: 'Engineering',
     position: 'Frontend Developer',
-    managerId: supervisor.id,
     isActive: true,
   });
 
@@ -72,19 +72,19 @@ async function seedDatabase() {
     role: UserRole.EMPLOYEE,
     department: 'Engineering',
     position: 'Backend Developer',
-    managerId: supervisor.id,
     isActive: true,
   });
 
   const savedUsers = await userRepo.save([supervisor, employee1, employee2, employee3]);
-  const [savedSupervisor, savedEmp1, savedEmp2, savedEmp3] = savedUsers;
+  const [, savedEmp1, savedEmp2, savedEmp3] = savedUsers;
 
-  // Create performance metrics for employees
-  const metrics = [
+  // Create performance metrics
+  const metricsData = [
     {
-      employee: savedEmp1,
-      supervisor: savedSupervisor,
-      scores: {
+      user: savedEmp1,
+      readinessScore: 82.5,
+      performanceScore: 85,
+      detailedScores: {
         codingQuality: 85,
         deliverySpeed: 78,
         testingQuality: 82,
@@ -94,12 +94,12 @@ async function seedDatabase() {
         ownership: 92,
         aiUsage: 70,
       },
-      readinessScore: 82.5,
     },
     {
-      employee: savedEmp2,
-      supervisor: savedSupervisor,
-      scores: {
+      user: savedEmp2,
+      readinessScore: 86.1,
+      performanceScore: 88,
+      detailedScores: {
         codingQuality: 92,
         deliverySpeed: 88,
         testingQuality: 85,
@@ -109,12 +109,12 @@ async function seedDatabase() {
         ownership: 85,
         aiUsage: 80,
       },
-      readinessScore: 86.1,
     },
     {
-      employee: savedEmp3,
-      supervisor: savedSupervisor,
-      scores: {
+      user: savedEmp3,
+      readinessScore: 72.9,
+      performanceScore: 75,
+      detailedScores: {
         codingQuality: 78,
         deliverySpeed: 72,
         testingQuality: 70,
@@ -124,17 +124,11 @@ async function seedDatabase() {
         ownership: 75,
         aiUsage: 65,
       },
-      readinessScore: 72.9,
     },
   ];
 
-  for (const m of metrics) {
-    const metric = performanceRepo.create({
-      employee: m.employee,
-      supervisor: m.supervisor,
-      scores: m.scores,
-      readinessScore: m.readinessScore,
-    });
+  for (const data of metricsData) {
+    const metric = performanceRepo.create(data);
     await performanceRepo.save(metric);
   }
 
