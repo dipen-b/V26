@@ -1,0 +1,1 @@
+{"version":3,"file":"create-submission.dto.d.ts","sourceRoot":"","sources":["../../../src/tasks/dto/create-submission.dto.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,cAAc,EAAE,MAAM,qCAAqC,CAAC;AAErE,qBAAa,mBAAmB;IAE9B,IAAI,EAAG,cAAc,CAAC;IAItB,OAAO,CAAC,EAAE,MAAM,CAAC;IAIjB,GAAG,CAAC,EAAE,MAAM,CAAC;IAIb,QAAQ,CAAC,EAAE,MAAM,CAAC,MAAM,EAAE,GAAG,CAAC,CAAC;CAChC"}
