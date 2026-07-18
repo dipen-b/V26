@@ -29,9 +29,9 @@ export default function GrowthPage() {
 
   const latestEvaluation = evaluations[0];
 
-  const trends = evaluations.map((eval: any) => ({
-    date: new Date(eval.createdAt).toLocaleDateString(),
-    readiness: eval.readinessScore,
+  const trends = evaluations.map((evaluation: any) => ({
+    date: new Date(evaluation.createdAt).toLocaleDateString(),
+    readiness: evaluation.readinessScore,
   })).reverse();
 
   return (
