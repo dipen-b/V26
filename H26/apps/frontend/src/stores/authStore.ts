@@ -15,10 +15,12 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
+  clearError: () => void;
   initializeAuth: () => Promise<void>;
 }
 
@@ -26,9 +28,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: false,
   isAuthenticated: false,
+  error: null,
 
   login: async (email: string, password: string) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const response = await apiClient.post('/auth/login', { email, password });
       const { user, access_token } = response.data;
@@ -36,14 +39,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      set({ user, isAuthenticated: true });
-    } finally {
-      set({ isLoading: false });
+      set({ user, isAuthenticated: true, isLoading: false, error: null });
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || error.message || 'Login failed';
+      set({ isLoading: false, error: errorMsg });
+      throw error;
     }
   },
 
   register: async (data: any) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const response = await apiClient.post('/auth/register', data);
       const { user, access_token } = response.data;
@@ -51,20 +56,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      set({ user, isAuthenticated: true });
-    } finally {
-      set({ isLoading: false });
+      set({ user, isAuthenticated: true, isLoading: false, error: null });
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
+      set({ isLoading: false, error: errorMsg });
+      throw error;
     }
   },
 
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    set({ user: null, isAuthenticated: false });
+    set({ user: null, isAuthenticated: false, error: null });
   },
 
   setUser: (user: User | null) => {
     set({ user, isAuthenticated: !!user });
+  },
+
+  clearError: () => {
+    set({ error: null });
   },
 
   initializeAuth: async () => {

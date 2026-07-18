@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Project } from '@/common/entities/project.entity';
 import { Task } from '@/common/entities/task.entity';
 
@@ -18,7 +18,10 @@ export class ProjectsService {
     });
 
     const projectIds = [...new Set(tasks.map(t => t.project.id))];
-    return this.projectsRepository.findByIds(projectIds);
+    if (projectIds.length === 0) return [];
+    return this.projectsRepository.find({
+      where: { id: In(projectIds) },
+    });
   }
 
   async getProjectById(projectId: string) {

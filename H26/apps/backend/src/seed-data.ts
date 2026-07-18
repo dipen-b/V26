@@ -1,34 +1,16 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from './common/entities/user.entity';
-import { UserRole } from './common/enums/user-role.enum';
-import { Task } from './common/entities/task.entity';
 import { PerformanceMetric } from './common/entities/performance-metric.entity';
+import { UserRole } from './common/enums/user-role.enum';
 
-const AppDataSource = new DataSource({
-  type: 'sqlite',
-  database: './skillproof_ai.db',
-  entities: [User, Task, PerformanceMetric],
-  synchronize: true,
-});
+export async function seedDemoData(dataSource: DataSource) {
+  const userRepo = dataSource.getRepository(User);
+  const performanceRepo = dataSource.getRepository(PerformanceMetric);
 
-async function seedDatabase() {
-  await AppDataSource.initialize();
-  const userRepo = AppDataSource.getRepository(User);
-  const taskRepo = AppDataSource.getRepository(Task);
-  const performanceRepo = AppDataSource.getRepository(PerformanceMetric);
-
-  // Check if data exists
-  const existingUsers = await userRepo.find();
-  if (existingUsers.length > 0) {
-    console.log('✅ Database already seeded');
-    await AppDataSource.destroy();
-    return;
-  }
-
-  // Create demo users
   const hashedPassword = await bcrypt.hash('password', 10);
 
+  // Create supervisor
   const supervisor = userRepo.create({
     email: 'supervisor@example.com',
     firstName: 'Jane',
@@ -40,6 +22,7 @@ async function seedDatabase() {
     isActive: true,
   });
 
+  // Create employees
   const employee1 = userRepo.create({
     email: 'employee@example.com',
     firstName: 'John',
@@ -79,8 +62,8 @@ async function seedDatabase() {
   const savedUsers = await userRepo.save([supervisor, employee1, employee2, employee3]);
   const [savedSupervisor, savedEmp1, savedEmp2, savedEmp3] = savedUsers;
 
-  // Create performance metrics for employees
-  const metrics = [
+  // Create performance metrics
+  const metricsData = [
     {
       employee: savedEmp1,
       supervisor: savedSupervisor,
@@ -128,24 +111,10 @@ async function seedDatabase() {
     },
   ];
 
-  for (const m of metrics) {
-    const metric = performanceRepo.create({
-      employee: m.employee,
-      supervisor: m.supervisor,
-      scores: m.scores,
-      readinessScore: m.readinessScore,
-    });
+  for (const data of metricsData) {
+    const metric = performanceRepo.create(data);
     await performanceRepo.save(metric);
   }
 
-  console.log('✅ Database seeded with demo data!');
-  console.log('Accounts:');
-  console.log('  Supervisor: supervisor@example.com / password');
-  console.log('  Employee 1: employee@example.com / password');
-  console.log('  Employee 2: dev2@example.com / password');
-  console.log('  Employee 3: dev3@example.com / password');
-
-  await AppDataSource.destroy();
+  console.log('✅ Demo data seeded successfully!');
 }
-
-seedDatabase().catch(console.error);
