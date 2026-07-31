@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
-import '../../widgets/progress_ring.dart';
-import '../../widgets/stat_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -12,453 +10,223 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedTab = 0;
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              _buildHeader(),
-
-              const SizedBox(height: 24),
-
-              // Progress Ring Section
-              _buildProgressSection(),
-
-              const SizedBox(height: 32),
-
-              // Quick Stats
-              _buildQuickStats(),
-
-              const SizedBox(height: 24),
-
-              // Today's Trackers
-              Text(
-                'Today\'s Trackers',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildTrackerCards(),
-
-              const SizedBox(height: 24),
-
-              // Today's Challenge
-              _buildChallengeCard(context),
-
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              _buildActionButtons(context),
-
-              const SizedBox(height: 80),
-            ],
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
           ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => context.go('/profile'),
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Weight Progress
+            Container(
+              decoration: AppDecoration.accentCard,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Current Weight',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '75 kg',
+                            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Goal: 70 kg',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '↓ 5 kg',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: 0.625,
+                      minHeight: 6,
+                      backgroundColor: Colors.grey[200],
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '62.5% to goal',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Stats Grid
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.3,
+              children: [
+                _buildStatCard('Active Challenges', '3', AppColors.secondary),
+                _buildStatCard('Workouts', '12', AppColors.info),
+                _buildStatCard('Streak', '7 days', AppColors.warning),
+                _buildStatCard('Achievements', '8', AppColors.success),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // Trackers
+            Text(
+              'Today\'s Metrics',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            _buildTracker('Water', '6 / 8', AppColors.info, 0.75),
+            const SizedBox(height: 12),
+            _buildTracker('Calories', '1,850 / 2,000', AppColors.warning, 0.925),
+            const SizedBox(height: 12),
+            _buildTracker('Steps', '8,342 / 10k', AppColors.secondary, 0.8342),
+            const SizedBox(height: 12),
+            _buildTracker('Protein', '95 / 120 g', AppColors.success, 0.79),
+
+            const SizedBox(height: 80),
+          ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(context),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.cardBg,
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.target_outlined), label: 'Challenges'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), label: 'Analytics'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Show add progress modal
-        },
-        backgroundColor: AppColors.primary,
+        onPressed: () {},
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Good Morning',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Sarah Anderson',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-          ],
-        ),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.secondary],
-            ),
-          ),
-          child: const Center(
-            child: Text('SA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProgressSection() {
+  Widget _buildStatCard(String label, String value, Color color) {
     return Container(
-      decoration: GlassmorphismDecoration.cardWithGradient,
-      padding: const EdgeInsets.all(20),
+      decoration: AppDecoration.card,
+      padding: const EdgeInsets.all(12),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Weight Progress',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        '75 kg',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.trending_down, size: 16, color: AppColors.accent),
-                            const SizedBox(width: 4),
-                            Text(
-                              '5 kg lost',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Text(
-                '→ 70 kg',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
-          const SizedBox(height: 24),
-          const ProgressRing(
-            progress: 0.625, // 5kg lost out of 8kg goal
-            size: 140,
-            label: 'Progress to Goal',
-            value: '62.5',
-            unit: '%',
-            color: AppColors.accent,
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickStats() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            CompactStatCard(
-              label: 'Active Challenges',
-              value: '3',
-              unit: '',
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            CompactStatCard(
-              label: 'Workouts',
-              value: '12',
-              unit: 'this month',
-              color: AppColors.secondary,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            CompactStatCard(
-              label: 'Current Streak',
-              value: '7',
-              unit: 'days',
-              color: AppColors.warning,
-            ),
-            const SizedBox(width: 12),
-            CompactStatCard(
-              label: 'Achievements',
-              value: '8',
-              unit: 'badges',
-              color: AppColors.accent,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTrackerCards() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            StatCard(
-              title: 'Water Intake',
-              value: '6',
-              unit: '/ 8 glasses',
-              icon: '💧',
-              accentColor: AppColors.info,
-            ),
-            const SizedBox(width: 12),
-            StatCard(
-              title: 'Calories',
-              value: '1,850',
-              unit: '/ 2,000',
-              icon: '🔥',
-              accentColor: AppColors.warning,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            StatCard(
-              title: 'Steps',
-              value: '8,342',
-              unit: '/ 10k',
-              icon: '👟',
-              accentColor: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            StatCard(
-              title: 'Protein',
-              value: '95',
-              unit: '/ 120g',
-              icon: '🥚',
-              accentColor: AppColors.accent,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChallengeCard(BuildContext context) {
+  Widget _buildTracker(String label, String value, Color color, double progress) {
     return Container(
-      decoration: GlassmorphismDecoration.cardWithGradient,
-      padding: const EdgeInsets.all(16),
+      decoration: AppDecoration.card,
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '30-Day Weight Loss',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '15 of 30 days completed',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              Text(label, style: Theme.of(context).textTheme.titleMedium),
               Text(
-                '50%',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
-              value: 0.5,
-              minHeight: 6,
-              backgroundColor: AppColors.textSecondary.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: '📊',
-                label: 'Analytics',
-                onTap: () => context.go('/analytics'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: '🎯',
-                label: 'Challenges',
-                onTap: () => context.go('/challenges'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: '🖼️',
-                label: 'Transformation',
-                onTap: () => context.go('/transformations'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: '👥',
-                label: 'Community',
-                onTap: () => context.go('/community'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context, {
-    required String icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: GlassmorphismDecoration.card,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 32)),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkBg,
-        border: Border(
-          top: BorderSide(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(context, icon: Icons.home_outlined, label: 'Home', index: 0),
-              _buildNavItem(context, icon: Icons.bar_chart_outlined, label: 'Analytics', index: 1),
-              SizedBox(width: 48), // Space for FAB
-              _buildNavItem(context, icon: Icons.favorite_outline, label: 'Nutrition', index: 2),
-              _buildNavItem(context, icon: Icons.person_outline, label: 'Profile', index: 3),
-            ],
-          ),
-          SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final isSelected = _selectedTab == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedTab = index);
-        // Navigate to corresponding screen
-      },
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            size: 24,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              fontSize: 10,
+              value: progress,
+              minHeight: 4,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
         ],
