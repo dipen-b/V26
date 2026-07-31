@@ -1,4 +1,9 @@
 import 'package:go_router/go_router.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/auth/signup_screen.dart';
+import '../screens/auth/onboarding_screen.dart';
+import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/challenges/challenge_center_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/auth/login',
@@ -10,26 +15,17 @@ final router = GoRouter(
         GoRoute(
           path: 'login',
           name: 'login',
-          builder: (context, state) {
-            // TODO: Implement LoginScreen
-            return const Placeholder();
-          },
+          builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
           path: 'signup',
           name: 'signup',
-          builder: (context, state) {
-            // TODO: Implement SignupScreen
-            return const Placeholder();
-          },
+          builder: (context, state) => const SignupScreen(),
         ),
         GoRoute(
           path: 'onboarding',
           name: 'onboarding',
-          builder: (context, state) {
-            // TODO: Implement OnboardingScreen
-            return const Placeholder();
-          },
+          builder: (context, state) => const OnboardingScreen(),
         ),
       ],
     ),
@@ -38,19 +34,13 @@ final router = GoRouter(
     GoRoute(
       path: '/home',
       name: 'home',
-      builder: (context, state) {
-        // TODO: Implement DashboardScreen
-        return const Placeholder();
-      },
+      builder: (context, state) => const DashboardScreen(),
     ),
 
     GoRoute(
       path: '/challenges',
       name: 'challenges',
-      builder: (context, state) {
-        // TODO: Implement ChallengeCenterScreen
-        return const Placeholder();
-      },
+      builder: (context, state) => const ChallengeCenterScreen(),
       routes: [
         GoRoute(
           path: ':id',
