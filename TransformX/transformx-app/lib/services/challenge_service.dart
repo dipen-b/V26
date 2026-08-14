@@ -11,21 +11,15 @@ class ChallengeService {
     int offset = 0,
     String? category,
   }) async {
-    try {
-      final response = await dio.get('/challenges', queryParameters: {
-        'limit': limit,
-        'offset': offset,
-        if (category != null) 'category': category,
-      });
+    final response = await dio.get('/challenges', queryParameters: {
+      'limit': limit,
+      'offset': offset,
+      if (category != null) 'category': category,
+    });
 
-      final challenges = (response.data['data']['challenges'] as List)
-          .map((c) => Challenge.fromJson(c as Map<String, dynamic>))
-          .toList();
-
-      return challenges;
-    } catch (e) {
-      rethrow;
-    }
+    return (response.data['data']['challenges'] as List)
+        .map((c) => Challenge.fromJson(c as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Challenge> getChallengeById(String id) async {
@@ -51,14 +45,18 @@ class ChallengeService {
     int progress,
   ) async {
     final response = await dio.put(
-      '/challenges/$userChallengeId/progress',
+      '/challenges/participation/$userChallengeId/progress',
       data: {'progressPercentage': progress},
     );
     return UserChallenge.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   Future<void> completeChallenge(String userChallengeId) async {
-    await dio.post('/challenges/$userChallengeId/complete');
+    await dio.post('/challenges/participation/$userChallengeId/complete');
+  }
+
+  Future<void> abandonChallenge(String userChallengeId) async {
+    await dio.post('/challenges/participation/$userChallengeId/abandon');
   }
 
   Future<List<LeaderboardEntry>> getLeaderboard(String challengeId) async {

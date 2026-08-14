@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../config/constants.dart';
 import '../../config/theme.dart';
 import '../../models/challenge_model.dart';
 import '../../services/challenge_service.dart';
@@ -45,17 +46,22 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['All', 'Beginner', 'Intermediate', 'Advanced']
-                    .map((cat) {
-                  final isSelected = _selectedCategory == (cat == 'All' ? null : cat);
+                // Keys are the values the API stores; the labels are for display.
+                // Sending the label instead never matches a row.
+                children: <MapEntry<String?, String>>[
+                  const MapEntry<String?, String>(null, 'All'),
+                  ...AppConstants.challengeCategories.entries
+                      .map((e) => MapEntry<String?, String>(e.key, e.value)),
+                ].map((cat) {
+                  final isSelected = _selectedCategory == cat.key;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
-                      label: Text(cat),
+                      label: Text(cat.value),
                       selected: isSelected,
                       onSelected: (value) {
                         setState(() {
-                          _selectedCategory = cat == 'All' ? null : cat;
+                          _selectedCategory = cat.key;
                           _loadChallenges();
                         });
                       },

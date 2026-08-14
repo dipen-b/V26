@@ -1,7 +1,7 @@
 class AppConstants {
   // API
   static const String apiBaseUrl = 'http://localhost:5000/api';
-  static const String apiTimeout = '30000'; // milliseconds
+  static const Duration apiTimeout = Duration(milliseconds: 30000);
 
   // Storage Keys
   static const String accessTokenKey = 'access_token';

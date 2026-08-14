@@ -1,10 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/challenges/challenge_list_screen.dart';
 import '../screens/challenges/challenge_detail_screen.dart';
 import '../services/challenge_service.dart';
-import 'package:dio/dio.dart';
+import 'api_client.dart';
+
+final _challengeService = ChallengeService(ApiClient.dio);
 
 final router = GoRouter(
   initialLocation: '/auth/login',
@@ -18,15 +21,16 @@ final router = GoRouter(
           name: 'login',
           builder: (context, state) => const LoginScreen(),
         ),
+        // TODO: SignupScreen and OnboardingScreen are not built yet.
         GoRoute(
           path: 'signup',
           name: 'signup',
-          builder: (context, state) => const SignupScreen(),
+          builder: (context, state) => const Placeholder(),
         ),
         GoRoute(
           path: 'onboarding',
           name: 'onboarding',
-          builder: (context, state) => const OnboardingScreen(),
+          builder: (context, state) => const Placeholder(),
         ),
       ],
     ),
@@ -41,21 +45,15 @@ final router = GoRouter(
     GoRoute(
       path: '/challenges',
       name: 'challenges',
-      builder: (context, state) {
-        final dio = Dio();
-        final challengeService = ChallengeService(dio);
-        return ChallengeListScreen(challengeService);
-      },
+      builder: (context, state) => ChallengeListScreen(_challengeService),
       routes: [
         GoRoute(
           path: ':id',
           name: 'challenge-detail',
-          builder: (context, state) {
-            final challengeId = state.pathParameters['id']!;
-            final dio = Dio();
-            final challengeService = ChallengeService(dio);
-            return ChallengeDetailScreen(challengeId, challengeService);
-          },
+          builder: (context, state) => ChallengeDetailScreen(
+            state.pathParameters['id']!,
+            _challengeService,
+          ),
         ),
       ],
     ),

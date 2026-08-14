@@ -1,27 +1,47 @@
 import { v4 as uuidv4 } from 'uuid';
 import { executeQuery } from '../config/database';
-import { getRedis } from '../config/redis';
+import { cacheDel, cacheGet, cacheSet } from '../config/redis';
 import { AppError } from '../middleware/error-handler.middleware';
 
+const LEADERBOARD_TTL_SECONDS = 300;
+
+function leaderboardKey(challengeId: string) {
+  return `leaderboard:${challengeId}`;
+}
+
 export class ChallengeService {
+  private async invalidateLeaderboard(challengeId: string) {
+    if (!challengeId) return;
+    await cacheDel(leaderboardKey(challengeId));
+  }
+
   async getAllChallenges(limit = 10, offset = 0, category?: string) {
-    let query = 'SELECT * FROM challenges WHERE is_active = true';
-    const params: any[] = [];
+    const filters = ['is_active = true'];
+    const filterParams: any[] = [];
 
     if (category) {
-      query += ` AND category = $${params.length + 1}`;
-      params.push(category);
+      filters.push(`category = $${filterParams.length + 1}`);
+      filterParams.push(category);
     }
 
-    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
+    const where = `WHERE ${filters.join(' AND ')}`;
 
-    const result = await executeQuery(query, params);
-    const countRes = await executeQuery('SELECT COUNT(*) as count FROM challenges WHERE is_active = true');
+    const result = await executeQuery(
+      `SELECT * FROM challenges ${where}
+       ORDER BY created_at DESC LIMIT $${filterParams.length + 1} OFFSET $${filterParams.length + 2}`,
+      [...filterParams, limit, offset],
+    );
+
+    // The count must use the same filters as the page query, otherwise
+    // pagination totals are wrong whenever a category filter is applied.
+    const countRes = await executeQuery(
+      `SELECT COUNT(*) as count FROM challenges ${where}`,
+      filterParams,
+    );
 
     return {
       challenges: result.rows,
-      total: parseInt(countRes.rows[0].count),
+      total: parseInt(countRes.rows[0].count, 10),
     };
   }
 
@@ -47,78 +67,93 @@ export class ChallengeService {
   }
 
   async joinChallenge(userId: string, challengeId: string) {
-    const existing = await executeQuery(
-      'SELECT id FROM user_challenges WHERE user_id = $1 AND challenge_id = $2 AND status != $3',
-      [userId, challengeId, 'abandoned'],
-    );
+    // Fail with a 404 rather than a foreign-key violation when the challenge
+    // does not exist or has been deactivated.
+    await this.getChallengeById(challengeId);
 
-    if (existing.rows[0]) throw new AppError(409, 'Already joined this challenge');
-
-    const id = uuidv4();
-    const now = new Date();
-
+    // user_challenges has UNIQUE(user_id, challenge_id), so a previously
+    // abandoned attempt must be reset in place instead of inserted again.
+    // Doing it as a single upsert also closes the check-then-insert race.
     const result = await executeQuery(
-      `INSERT INTO user_challenges (id, user_id, challenge_id, started_at, progress_percentage, is_active, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [id, userId, challengeId, now, 0, true, 'active', now, now],
+      `INSERT INTO user_challenges (id, user_id, challenge_id, started_at, progress_percentage, is_active, status)
+       VALUES ($1, $2, $3, $4, 0, true, 'active')
+       ON CONFLICT (user_id, challenge_id) DO UPDATE
+         SET status = 'active',
+             is_active = true,
+             progress_percentage = 0,
+             started_at = EXCLUDED.started_at,
+             completed_at = NULL
+         WHERE user_challenges.status = 'abandoned'
+       RETURNING *`,
+      [uuidv4(), userId, challengeId, new Date()],
     );
 
+    // No row comes back when the conflict target exists but is not abandoned,
+    // i.e. the user is already an active or completed participant.
+    if (!result.rows[0]) throw new AppError(409, 'Already joined this challenge');
+
+    await this.invalidateLeaderboard(challengeId);
     return result.rows[0];
   }
 
   async updateProgress(userId: string, userChallengeId: string, progress: number) {
-    if (progress < 0 || progress > 100) {
-      throw new AppError(400, 'Progress must be between 0 and 100');
+    if (!Number.isInteger(progress) || progress < 0 || progress > 100) {
+      throw new AppError(400, 'Progress must be an integer between 0 and 100');
     }
 
     const result = await executeQuery(
-      `UPDATE user_challenges SET progress_percentage = $1, updated_at = $2
-       WHERE id = $3 AND user_id = $4 RETURNING *`,
-      [progress, new Date(), userChallengeId, userId],
+      `UPDATE user_challenges SET progress_percentage = $1
+       WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [progress, userChallengeId, userId],
     );
 
     if (!result.rows[0]) throw new AppError(404, 'Challenge not found');
+
+    await this.invalidateLeaderboard(result.rows[0].challenge_id);
     return result.rows[0];
   }
 
   async completeChallenge(userId: string, userChallengeId: string) {
     const result = await executeQuery(
       `UPDATE user_challenges
-       SET status = 'completed', completed_at = $1, progress_percentage = 100, updated_at = $1
+       SET status = 'completed', completed_at = $1, progress_percentage = 100
        WHERE id = $2 AND user_id = $3 RETURNING *`,
       [new Date(), userChallengeId, userId],
     );
 
     if (!result.rows[0]) throw new AppError(404, 'Challenge not found');
+
+    await this.invalidateLeaderboard(result.rows[0].challenge_id);
     return result.rows[0];
   }
 
   async abandonChallenge(userId: string, userChallengeId: string) {
     const result = await executeQuery(
       `UPDATE user_challenges
-       SET status = 'abandoned', is_active = false, updated_at = $1
-       WHERE id = $2 AND user_id = $3 RETURNING *`,
-      [new Date(), userChallengeId, userId],
+       SET status = 'abandoned', is_active = false
+       WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [userChallengeId, userId],
     );
 
     if (!result.rows[0]) throw new AppError(404, 'Challenge not found');
+
+    await this.invalidateLeaderboard(result.rows[0].challenge_id);
     return result.rows[0];
   }
 
   async getLeaderboard(challengeId: string, limit = 100) {
-    const redis = getRedis();
-    const cacheKey = `leaderboard:${challengeId}`;
-    const cached = await redis.get(cacheKey);
+    const cacheKey = leaderboardKey(challengeId);
+    const cached = await cacheGet(cacheKey);
 
     if (cached) return JSON.parse(cached);
 
     const result = await executeQuery(
-      `SELECT uc.*, u.first_name, u.last_name,
-              ROW_NUMBER() OVER (ORDER BY uc.progress_percentage DESC) as rank
+      `SELECT uc.user_id, uc.progress_percentage, u.first_name, u.last_name,
+              ROW_NUMBER() OVER (ORDER BY uc.progress_percentage DESC, uc.started_at ASC) as rank
        FROM user_challenges uc
        JOIN users u ON uc.user_id = u.id
-       WHERE uc.challenge_id = $1
-       ORDER BY uc.progress_percentage DESC LIMIT $2`,
+       WHERE uc.challenge_id = $1 AND uc.status <> 'abandoned'
+       ORDER BY uc.progress_percentage DESC, uc.started_at ASC LIMIT $2`,
       [challengeId, limit],
     );
 
@@ -129,7 +164,7 @@ export class ChallengeService {
       progress: parseInt(r.progress_percentage, 10),
     }));
 
-    await redis.setEx(cacheKey, 300, JSON.stringify(leaderboard));
+    await cacheSet(cacheKey, JSON.stringify(leaderboard), LEADERBOARD_TTL_SECONDS);
     return leaderboard;
   }
 }

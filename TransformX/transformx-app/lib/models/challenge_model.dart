@@ -36,6 +36,11 @@ class Challenge {
   }
 }
 
+DateTime? _parseOptionalDate(dynamic value) {
+  if (value == null) return null;
+  return DateTime.tryParse(value as String);
+}
+
 class UserChallenge {
   final String id;
   final String challengeId;
@@ -73,11 +78,13 @@ class UserChallenge {
       progressPercentage: json['progress_percentage'] ?? json['progressPercentage'] ?? 0,
       status: json['status'] ?? 'active',
       startedAt: DateTime.parse(
-        json['started_at'] ?? json['startedAt'] ?? DateTime.now().toString(),
+        json['started_at'] ??
+            json['startedAt'] ??
+            DateTime.now().toIso8601String(),
       ),
-      completedAt: json['completed_at'] != null
-          ? DateTime.parse(json['completed_at'])
-          : null,
+      completedAt: _parseOptionalDate(
+        json['completed_at'] ?? json['completedAt'],
+      ),
     );
   }
 }
