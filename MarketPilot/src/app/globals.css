@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+  }
+
+  ::selection {
+    background: rgba(79, 70, 229, 0.4);
+  }
+
+  /* Slim scrollbars, Linear-style. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(248, 250, 252, 0.12);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(248, 250, 252, 0.22);
+    background-clip: content-box;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply bg-transparent;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary/70 ring-offset-2 ring-offset-canvas;
+  }
+}
+
+@layer components {
+  /* Markdown rendering for AI chat replies and long-form report prose. */
+  .md {
+    @apply text-[15px] leading-7 text-ink/90;
+  }
+  .md > * + * {
+    @apply mt-4;
+  }
+  .md h1 {
+    @apply mt-6 text-xl font-semibold tracking-tight text-ink;
+  }
+  .md h2 {
+    @apply mt-6 text-lg font-semibold tracking-tight text-ink;
+  }
+  .md h3 {
+    @apply mt-5 text-[15px] font-semibold tracking-tight text-ink;
+  }
+  .md p {
+    @apply text-ink/85;
+  }
+  .md strong {
+    @apply font-semibold text-ink;
+  }
+  .md em {
+    @apply text-muted;
+  }
+  .md ul {
+    @apply list-disc space-y-1.5 pl-5 marker:text-primary;
+  }
+  .md ol {
+    @apply list-decimal space-y-1.5 pl-5 marker:text-primary marker:font-medium;
+  }
+  .md li {
+    @apply text-ink/85;
+  }
+  .md a {
+    @apply text-primary underline underline-offset-2 hover:text-secondary;
+  }
+  .md code {
+    @apply rounded bg-canvas/80 px-1.5 py-0.5 font-mono text-[13px] text-secondary;
+  }
+  .md pre {
+    @apply overflow-x-auto rounded-xl border border-line bg-canvas/80 p-4;
+  }
+  .md pre code {
+    @apply bg-transparent p-0 text-ink/90;
+  }
+  .md blockquote {
+    @apply border-l-2 border-primary/50 pl-4 text-muted;
+  }
+  .md hr {
+    @apply border-line;
+  }
+  .md table {
+    @apply w-full border-collapse text-sm;
+  }
+  .md th,
+  .md td {
+    @apply border border-line px-3 py-2 text-left;
+  }
+  .md th {
+    @apply bg-canvas/60 font-medium text-ink;
+  }
+}
