@@ -347,9 +347,10 @@ export const SCORE_WEIGHTS = {
  * zero — a website is not a bad app listing, it simply has no app listing.
  */
 export function computeMarketingScore(parts: Omit<Scores, 'marketing'>): number {
-  const entries = (Object.keys(SCORE_WEIGHTS) as (keyof typeof SCORE_WEIGHTS)[])
-    .map((key) => ({ weight: SCORE_WEIGHTS[key], value: parts[key] }))
-    .filter((entry): entry is { weight: number; value: number } => typeof entry.value === 'number')
+  const entries = (Object.keys(SCORE_WEIGHTS) as (keyof typeof SCORE_WEIGHTS)[]).flatMap((key) => {
+    const value = parts[key]
+    return typeof value === 'number' ? [{ weight: SCORE_WEIGHTS[key], value }] : []
+  })
 
   const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0)
   if (!totalWeight) return 0
