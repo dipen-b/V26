@@ -82,18 +82,23 @@ ${target.notes ? `\nContext from the analyst: ${target.notes}` : ''}`,
   try {
     // Each pause_turn is one continuation; the cap stops a pathological loop.
     for (let attempt = 0; attempt < 6; attempt++) {
-      const response = await anthropic().messages.create({
-        model: MODEL,
-        max_tokens: 16000,
-        system: RESEARCH_SYSTEM,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: 'medium' },
-        tools: [
-          { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 8 },
-          { type: 'web_search_20260209', name: 'web_search', max_uses: 6 },
-        ],
-        messages,
-      })
+      // Streamed for the same reason as lib/ai.ts generate(): the SDK refuses
+      // non-streaming requests that its 10-minute ceiling might not cover, and a
+      // tool-using research turn is exactly that shape.
+      const response = await anthropic()
+        .messages.stream({
+          model: MODEL,
+          max_tokens: 16000,
+          system: RESEARCH_SYSTEM,
+          thinking: { type: 'adaptive' },
+          output_config: { effort: 'medium' },
+          tools: [
+            { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 8 },
+            { type: 'web_search_20260209', name: 'web_search', max_uses: 6 },
+          ],
+          messages,
+        })
+        .finalMessage()
 
       collected.push(...response.content)
 
