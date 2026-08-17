@@ -39,7 +39,34 @@ guaranteed shape.
 | Social Media AI Studio | `/social` | 7/30/90-day calendars for LinkedIn, Instagram, X, Facebook, YouTube with hooks, bodies, hashtags, timing |
 | ASO Optimizer | `/aso` | Title/subtitle rewrites inside real store limits, ranked keywords, screenshot direction |
 | Analytics Command Center | `/analytics` | Metric dashboard plus an AI briefing that explains movements in plain language |
+| Marketing Intelligence Engine | `/intelligence` | Full 13-section audit of any competitor URL, multi-competitor comparison, and CEO reports exportable to PDF/PPTX/XLSX |
 | Settings | `/settings` | Brand profile, role capabilities, plans, and the workspace asset library |
+
+### Marketing Intelligence Engine (Module 10)
+
+Paste any Play Store, App Store, website, landing page, or SaaS URL. The engine
+detects the target type, researches it, and returns all thirteen spec sections:
+executive summary, persona, positioning, ASO, acquisition channels, Google Ads,
+Meta Ads, ad creative, funnel, revenue, ad library, SWOT, and growth
+recommendations — plus seven 0–100 scores and a ranked action plan.
+
+Two design decisions are worth knowing:
+
+- **Research first, then four parallel passes.** One structured call for all
+  thirteen sections is unreliable at that size, so a single research stage
+  (using the `web_fetch` and `web_search` server tools) produces a digest that
+  four independent section-group calls share. They run concurrently, and one
+  group failing degrades that section to its fixture instead of losing the whole
+  report.
+- **Scores are computed, not asked for.** Each group returns its own rubric-bound
+  score; the headline marketing score is a weighted blend in code. When the
+  target is not an app, ASO is `null` and its weight is redistributed rather than
+  counted as zero — a website is not a bad app listing.
+
+Comparison takes 2–10 finished reports and produces the market landscape,
+positioning, messaging, feature, and growth-opportunity matrices plus a CEO
+growth report. Any report or comparison exports to PDF, PowerPoint, or Excel;
+the Excel export puts every table on its own filterable sheet.
 
 Everything a generator produces is saved to the workspace asset library.
 
@@ -99,11 +126,18 @@ These are deliberately out of scope for this build:
   is in the `metrics` table.
 - **Billing.** Plans are displayed for reference; no payment provider is wired up
   and every module is unlocked regardless of plan.
-- **Competitor analysis does not browse.** The model reasons from the URL, brand,
-  and category conventions rather than fetching the page, and phrases inferences
-  as inferences. Adding the `web_fetch` server tool would make it live.
-- **Modules 7–9 from the spec** (Growth Consultant, Marketing Automation,
-  Reporting Engine) are not separate modules. Growth consulting is folded into the
-  chat system prompt; automation and PDF/Excel/PowerPoint export are not built.
+- **Module 2 (Competitor Intelligence) does not browse.** The older, lighter
+  competitor module reasons from the URL and category conventions rather than
+  fetching the page. Module 10 supersedes it and does fetch — Module 2 is kept
+  because it is a faster, cheaper single call when a full audit is overkill.
+- **Screenshot and feature-graphic analysis is textual.** Module 10's ASO section
+  reasons about creative from listing text and category conventions; it does not
+  download and look at the images. Passing the screenshots in as image blocks
+  would make that section genuinely visual.
+- **Modules 7–8 from the spec** (Growth Consultant, Marketing Automation) are not
+  separate modules. Growth consulting is folded into the chat system prompt;
+  automation workflows are not built. Module 9 (Reporting Engine) exists only as
+  Module 10's PDF/PPTX/XLSX export — there is no scheduled or white-labelled
+  reporting.
 - **Team invitations.** The membership table supports multiple users per
   workspace, but there is no invite flow — each account creates its own workspace.

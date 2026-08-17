@@ -53,17 +53,22 @@ export async function generate<T>(opts: {
   if (mockForced()) return { data: opts.fallback, source: 'fallback' }
 
   try {
-    const response = await client().messages.create({
-      model: MODEL,
-      max_tokens: opts.maxTokens ?? 16000,
-      system: opts.system,
-      thinking: { type: 'adaptive' },
-      output_config: {
-        effort: opts.effort ?? 'medium',
-        format: { type: 'json_schema', schema: opts.schema },
-      },
-      messages: [{ role: 'user', content: opts.prompt }],
-    })
+    // Streamed rather than awaited whole: the SDK rejects non-streaming requests
+    // whose max_tokens could push them past its 10-minute ceiling, which these
+    // long structured generations do. finalMessage() reassembles the result.
+    const response = await client()
+      .messages.stream({
+        model: MODEL,
+        max_tokens: opts.maxTokens ?? 16000,
+        system: opts.system,
+        thinking: { type: 'adaptive' },
+        output_config: {
+          effort: opts.effort ?? 'medium',
+          format: { type: 'json_schema', schema: opts.schema },
+        },
+        messages: [{ role: 'user', content: opts.prompt }],
+      })
+      .finalMessage()
 
     if (response.stop_reason === 'refusal') {
       return {
