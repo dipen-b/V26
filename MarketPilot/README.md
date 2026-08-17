@@ -29,6 +29,38 @@ The app calls **`claude-opus-5`** with adaptive thinking: streaming for chat, an
 structured outputs (JSON Schema) for the module generators so every report has a
 guaranteed shape.
 
+### Providers
+
+AI access goes through a provider chain in `src/lib/ai/`. `AI_CHAIN` lists
+providers in order; the first with working credentials answers, and if none do,
+every module falls back to sample content.
+
+```
+AI_CHAIN=openai,anthropic     # prefer OpenAI, keep Anthropic as backup
+```
+
+Adding a provider is one file in `src/lib/ai/providers/` implementing the
+`Provider` interface, plus one line in the registry. The nine callers import
+`generate()`/`chatStream()` and never learn a provider exists.
+
+**OpenAI needs both `OPENAI_API_KEY` and `OPENAI_MODEL`.** There is no default
+model on purpose — ids change often, and guessing one turns into a confusing 404
+at request time. Without both set the provider reports itself unconfigured and is
+skipped rather than failing the request.
+
+Two things are worth knowing before switching the chain away from Anthropic:
+
+- **Structured output guarantees differ.** Anthropic enforces the JSON schema;
+  OpenAI's strict mode enforces the same shape but caps nesting depth and
+  property count, which the larger intelligence schemas can exceed. That case
+  degrades to plain JSON mode with the schema inlined and the result parse-checked
+  — the guarantee is weaker, so malformed output surfaces as an error instead of
+  reaching the UI half-formed.
+- **The intelligence research stage is Anthropic-only.** It uses the
+  `web_fetch`/`web_search` server tools, which have no cross-provider equivalent.
+  Without Anthropic credentials that stage is skipped and reports are written
+  without live page data, whatever `AI_CHAIN` says.
+
 ## What's built
 
 | Module | Route | What it does |
